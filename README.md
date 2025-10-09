@@ -136,7 +136,8 @@ Due to imbalance cause, the stratified k-fold Cross Validation, with a k=10 was 
 
 results:
 
-			<img width="672" height="76" alt="image" src="https://github.com/user-attachments/assets/4073e707-ec5f-4989-94e8-37d207f8e2ef" />
+
+<img width="672" height="76" alt="image" src="https://github.com/user-attachments/assets/4073e707-ec5f-4989-94e8-37d207f8e2ef" />
 
 
 
@@ -146,10 +147,11 @@ To analyze the errors in the detection I used the model from the last fold:
 
 Since EventID identify the kind of task that was done, I firstly looked at EventID values.
 
-FN: 
+False Negative: 
 
 When analyzing the distribution of errors, I found that around 90% of all false negatives involve EventID 7, and within those, 99% also share ThreadID 3292. This suggests that the model systematically fails on this log type. An explanation that can be is these feature values look very similar to normal events in the dataset, so the Isolation Forest considers them part of the normal cluster. In practice, this might mean that EventID 7 logs with this specific thread are frequent or “routine” enough to appear normal in the feature space, even if they are labeled anomalous. Thus, the model underestimates their abnormality.
-FP (False alarms):
+
+False Postives (False alarms):
 
 On the other hand, false positives occurred with 51% of EventID = 3 and within those 99% were Computer = 'WIN-J23NIGGP1Q6.sysmon_set.local' .
 A possible explanation is that this specific combination of computer type with EventID is relatively rare in the dataset, so even though this particular instance was benign, the model interpreted the uncommon entry as a deviation from normal behavior.
@@ -160,11 +162,12 @@ A possible explanation is that this specific combination of computer type with E
 
 To analyze the errors in the detection I used the model from the last fold:
 
-FN: 
+False Negative: 
 
 false negatives occurred with 58% of EventID = 1 and within those 58% were Computer = 'WIN-J23NIGGP1Q6.sysmon_set.local' and 41% were Computer = 'WINDOWS10EVAL.stefania.local'.
 A possible explanation is that this specific combination of computer type with EventID is relatively frequent and thus it is tagged as normal label.
-FP:
+
+False Postives (False alarms):
 
 Interestingly, false positives occurred with 51% of EventID = 1 and within those 91% were Computer = 'WIN-J23NIGGP1Q6.sysmon_set.local' and 9% were Computer = 'WINDOWS10EVAL.stefania.local', the same computers and EventID as in the FN. However, in FP cases ThredID values were centered : 39% for 1292, 28% for 3408 and 20% for 1912. In FN they were not dense around particular values, they were changing along the entries. This suggests that to model decision was more influenced by ThreadID.
 
@@ -179,6 +182,7 @@ Computer = 'LAPTOP-ROPR18AK'
 ProcessId = 4.0
 
 I turned to the Loss diagram:
+
 <img width="486" height="371" alt="image" src="https://github.com/user-attachments/assets/c6d0befd-5816-4a68-a509-72a941abe228" />
 
 When looking at the diagram, we can see that the false positives fall within the same loss range as many true negatives and false negatives. The separation between false negatives and true positives is small. A possible explanation is that these feature values produce reconstruction errors that overlap with those of normal events. As a result, the Autoencoder struggles to discriminate between classes when encountering these values, leading to misclassification.
