@@ -2,6 +2,9 @@
 Lateral movement refers to a group of methods cyber criminals use to explore a network after initial access, to find vulnerabilities, escalate access privileges, and reach their ultimate target.  
 In this Project we use AutoEncoders, IsolationForest or XGBoost to detect such attacks in LMD-2023 Dataset, each ML approach was used independently. The dataset can be found here https://github.com/ChristosSmiliotopoulos/Lateral-Movement-Dataset--LMD_Collections.
 
+First, I did AutoEncoder training which this method was based on the paper: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4858344#page=20&zoom=100,84,72
+Then, I chose 2 another ML approaches of IsolationForest and XGBoost.
+
 Few characteristics of such attacks:
 
 ●	Observation:
