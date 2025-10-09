@@ -63,13 +63,13 @@ The LMD-2023 dataset was generated in a Microsoft Windows Domain testbed compose
 Data set structure:
 The dataset includes three labels: Normal, EoRS (Elevation of Remote Session), and EoHT (Elevation of Host Tools). The latter two classes together represent 15 lateral movement (LM) techniques. All events are provided in a single combined file containing approximately 1.75 million records, where 92% are labeled as Normal (0) and the remaining 8% as abnormal (EoRS = 1 or EoHT = 2).
 
-**The features:
-**
+**The features:**
+
 SHAP explanation is made for the 9 features which are used in the paper combined with all the other numeric features. However, some numeric features are not included due to having the same value all over the log records or due to delivering the same meaning as other features or due to irrelevance to the detection task.
 For example Task feature is identical to EventID, UTCtime has the same meaning as SystemTime, Channel feature has the same value all over the log records and Version2 just indicates the event log format version.
 After further consideration, time-based features were excluded from the analysis. When they were included, the model achieved nearly perfect performance (Precision ≈ 1.0, other metrics ≈ 0.99). However, these results were misleading, as the abnormal events in the dataset were concentrated within specific time windows. This allowed the model to rely on temporal patterns rather than learning the underlying behavioral characteristics of lateral movement activity. Since the objective was to detect abnormal behavior based on relevant event features rather than the time at which it occurred, removing time-based features yielded more realistic results. While time can provide useful context (unusual activity during off work hours), in this dataset it introduced bias rather than insight.
 
-
+**Short explanation for each feature:**
 
 Computer (CompSTA): The hostname or identifier of the computer where the event occurred. Lateral movement often involves attackers accessing multiple hosts. Tracking which machine logs an event can reveal abnormal host-to-host activity patterns. 
 
@@ -119,15 +119,15 @@ Monitoring thread creation can expose malicious behavior (e.g., attackers creati
 
 Eventually after SHAP explanation I took the 10 features with the highest SHAP values (means they affect decisions the most)
 
-The SHAP values plot: The SHAP explanation was done with IsolationForest ML technique, and was basedon these 2 tutorials:
-link1  link2.
+The SHAP values plot: The SHAP explanation was done with IsolationForest ML technique.
+
 <img width="647" height="664" alt="image" src="https://github.com/user-attachments/assets/21d22b74-5d8d-42c3-a148-00acb8df17e9" />
 
 
 # The ML technique training and testing details and results: 
 Special reference should be made to the highly imbalanced nature of LMD-2023, as denoted here: 
 
-<img width="709" height="118" alt="image" src="https://github.com/user-attachments/assets/a9303891-4da8-4d96-b3cc-98e1d0a34ec0" />
+<img width="400" height="96" alt="image" src="https://github.com/user-attachments/assets/c74b4b56-3a3c-4ff5-af62-255946a2df84" />
 
 
 Due to imbalance cause, the stratified k-fold Cross Validation, with a k=10 was applied to each model. Precisely, each fold divided the total of the LMD-2023 dataset into 1.314.668 and 438.223 subcategories related to the training and testing tests, respectively. This helps evaluate model performance more reliably than a single train or test split.
@@ -135,9 +135,63 @@ Due to imbalance cause, the stratified k-fold Cross Validation, with a k=10 was 
 
 
 results:
-![Uploading image.png…]()
 
-			
+			<img width="672" height="76" alt="image" src="https://github.com/user-attachments/assets/4073e707-ec5f-4989-94e8-37d207f8e2ef" />
+
+
+
+# Anaylizing Mistakes in IsolationForest:
+
+To analyze the errors in the detection I used the model from the last fold:
+
+Since EventID identify the kind of task that was done, I firstly looked at EventID values.
+
+FN: 
+
+When analyzing the distribution of errors, I found that around 90% of all false negatives involve EventID 7, and within those, 99% also share ThreadID 3292. This suggests that the model systematically fails on this log type. An explanation that can be is these feature values look very similar to normal events in the dataset, so the Isolation Forest considers them part of the normal cluster. In practice, this might mean that EventID 7 logs with this specific thread are frequent or “routine” enough to appear normal in the feature space, even if they are labeled anomalous. Thus, the model underestimates their abnormality.
+FP (False alarms):
+
+On the other hand, false positives occurred with 51% of EventID = 3 and within those 99% were Computer = 'WIN-J23NIGGP1Q6.sysmon_set.local' .
+A possible explanation is that this specific combination of computer type with EventID is relatively rare in the dataset, so even though this particular instance was benign, the model interpreted the uncommon entry as a deviation from normal behavior.
+
+
+# Anaylyzing mistakes in XGBoost:
+
+
+To analyze the errors in the detection I used the model from the last fold:
+
+FN: 
+
+false negatives occurred with 58% of EventID = 1 and within those 58% were Computer = 'WIN-J23NIGGP1Q6.sysmon_set.local' and 41% were Computer = 'WINDOWS10EVAL.stefania.local'.
+A possible explanation is that this specific combination of computer type with EventID is relatively frequent and thus it is tagged as normal label.
+FP:
+
+Interestingly, false positives occurred with 51% of EventID = 1 and within those 91% were Computer = 'WIN-J23NIGGP1Q6.sysmon_set.local' and 9% were Computer = 'WINDOWS10EVAL.stefania.local', the same computers and EventID as in the FN. However, in FP cases ThredID values were centered : 39% for 1292, 28% for 3408 and 20% for 1912. In FN they were not dense around particular values, they were changing along the entries. This suggests that to model decision was more influenced by ThreadID.
+
+# Analyizing mistakes in AutoEncoder:
+
+Let's analyze FP and FN in the AutoEncoder:
+
+When analyzing the FP and FN something strange happened, in both the FP and FN arrays the most common values in the records were:
+
+EventID = 3
+Computer = 'LAPTOP-ROPR18AK'
+ProcessId = 4.0
+
+I turned to the Loss diagram:
+<img width="486" height="371" alt="image" src="https://github.com/user-attachments/assets/c6d0befd-5816-4a68-a509-72a941abe228" />
+
+When looking at the diagram, we can see that the false positives fall within the same loss range as many true negatives and false negatives. The separation between false negatives and true positives is small. A possible explanation is that these feature values produce reconstruction errors that overlap with those of normal events. As a result, the Autoencoder struggles to discriminate between classes when encountering these values, leading to misclassification.
+
+
+To summarize, we could not identify a single set of feature values that consistently led to false positives or false negatives across all models. Instead, each ML method struggled with different feature-value combinations, suggesting that the misclassifications are tied to the way each model learns and represents the data.
+ 
+
+
+
+
+
+
 	
 
 
