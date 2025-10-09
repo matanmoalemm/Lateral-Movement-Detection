@@ -34,7 +34,8 @@ An autoencoder is a type of artificial neural network used to learn efficient co
 
 My code was based on this tutorial : [Analytics Vidhya](https://www.analyticsvidhya.com/blog/2022/01/complete-guide-to-anomaly-detection-with-autoencoders-using-tensorflow/) , using TensorFlow.
 
-<img width="875" height="718" alt="image" src="https://github.com/user-attachments/assets/6f94ffa3-a607-4a80-a6ed-9829d3be6430" />
+
+<img width="874" height="718" alt="image" src="https://github.com/user-attachments/assets/4f2a8a87-1db1-4c31-ae4f-5e42192e75be" />
 
 
 
@@ -45,8 +46,7 @@ In this technique I use GridSearchCV search function in scikit-learn to find the
 GridSearchCV exhaustively considers all parameters combinations and computes cross-validation score (by a given function). 
 After an initial training with the best parameters, we used SHAP to explain the predictions. Some of our features were categorical, and since we applied One-Hot Encoding (OHE), each category was split into multiple binary columns. To make the explanations easier to understand, a good practice is to combine the SHAP values of all these sub-columns back into their original feature. We followed this approach during the SHAP interpretation, and it gave us clear and useful results.
 
-<img width="939" height="290" alt="image" src="https://github.com/user-attachments/assets/fae58cd8-2098-42be-afa2-91e17bb62831" />
-
+<img width="847" height="568" alt="image" src="https://github.com/user-attachments/assets/2f4f9f3a-0831-4059-af32-f103796d80ef" />
 
 
 **XGBoost:**
@@ -54,21 +54,22 @@ After an initial training with the best parameters, we used SHAP to explain the 
 At its core, XGBoost builds a series of decision trees sequentially, each one correcting the errors of the previous one. This is achieved through the use of gradient boosting, where the algorithm focuses on the residuals (the differences between the actual and predicted values) in each iteration.
 Just as in isolationForest I use GridSearchCV search function in scikit-learn to find the best parameters to train the model.
 
-<img width="400" height="96" alt="image" src="https://github.com/user-attachments/assets/5f0bbc8f-3110-4aaa-9710-02de2f095b0a" />
+<img width="939" height="290" alt="image" src="https://github.com/user-attachments/assets/9587c43f-2070-43d9-8edc-0b8ddfef31f2" />
 
-#The dataset and its features:
+
+# The dataset and its features:
 
 The LMD-2023 dataset was generated in a Microsoft Windows Domain testbed composed of both virtual and physical machines, realistically emulating a typical SOHO (Small Office/Home Office) environment. The collection process produced EVTX log files, which were later converted into readable CSV format using the ETCExp tool (that can be found in this link). This tool is optimized for efficiently processing large EVTX files.
 Data set structure:
 The dataset includes three labels: Normal, EoRS (Elevation of Remote Session), and EoHT (Elevation of Host Tools). The latter two classes together represent 15 lateral movement (LM) techniques. All events are provided in a single combined file containing approximately 1.75 million records, where 92% are labeled as Normal (0) and the remaining 8% as abnormal (EoRS = 1 or EoHT = 2).
 
-The features:
-
+**The features:
+**
 SHAP explanation is made for the 9 features which are used in the paper combined with all the other numeric features. However, some numeric features are not included due to having the same value all over the log records or due to delivering the same meaning as other features or due to irrelevance to the detection task.
 For example Task feature is identical to EventID, UTCtime has the same meaning as SystemTime, Channel feature has the same value all over the log records and Version2 just indicates the event log format version.
 After further consideration, time-based features were excluded from the analysis. When they were included, the model achieved nearly perfect performance (Precision ≈ 1.0, other metrics ≈ 0.99). However, these results were misleading, as the abnormal events in the dataset were concentrated within specific time windows. This allowed the model to rely on temporal patterns rather than learning the underlying behavioral characteristics of lateral movement activity. Since the objective was to detect abnormal behavior based on relevant event features rather than the time at which it occurred, removing time-based features yielded more realistic results. While time can provide useful context (unusual activity during off work hours), in this dataset it introduced bias rather than insight.
 
-The features:
+
 
 Computer (CompSTA): The hostname or identifier of the computer where the event occurred. Lateral movement often involves attackers accessing multiple hosts. Tracking which machine logs an event can reveal abnormal host-to-host activity patterns. 
 
@@ -123,7 +124,7 @@ link1  link2.
 <img width="647" height="664" alt="image" src="https://github.com/user-attachments/assets/21d22b74-5d8d-42c3-a148-00acb8df17e9" />
 
 
-#The ML technique training and testing details and results: 
+# The ML technique training and testing details and results: 
 Special reference should be made to the highly imbalanced nature of LMD-2023, as denoted here: 
 
 <img width="709" height="118" alt="image" src="https://github.com/user-attachments/assets/a9303891-4da8-4d96-b3cc-98e1d0a34ec0" />
